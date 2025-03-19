@@ -1,0 +1,2 @@
+/home/akshay/Projects/collab/expense_tracker/android/app/.cxx/Debug/165v436m/armeabi-v7a/CMakeFiles/edit_cache.dir
+/home/akshay/Projects/collab/expense_tracker/android/app/.cxx/Debug/165v436m/armeabi-v7a/CMakeFiles/rebuild_cache.dir

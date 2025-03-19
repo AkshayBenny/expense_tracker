@@ -1,0 +1,73 @@
+# Miscellaneous
+*.class
+*.log
+*.pyc
+*.swp
+.DS_Store
+.atom/
+.buildlog/
+.history
+.svn/
+migrate_working_dir/
+
+# IntelliJ related
+*.iml
+*.ipr
+*.iws
+.idea/
+
+# VS Code settings (optional)
+.vscode/
+
+# Flutter/Dart/Pub related
+**/doc/api/
+**/ios/Flutter/.last_build_id
+.dart_tool/
+.flutter-plugins
+.flutter-plugins-dependencies
+.pub-cache/
+.pub/
+/build/
+.cdart
+
+# Symbolication related
+app.*.symbols
+
+# Obfuscation related
+app.*.map.json
+
+# Android Studio build artifacts
+/android/app/debug/
+/android/app/profile/
+/android/app/release/
+/android/.gradle/
+/android/.idea/
+/android/local.properties
+/android/key.properties
+
+# Xcode related
+ios/Pods/
+/ios/.symlinks/
+/ios/Flutter/App.framework
+/ios/Flutter/Flutter.framework
+/ios/Flutter/Generated.xcconfig
+ios/Flutter/flutter_export_environment.sh
+ios/Runner.xcworkspace/
+/ios/Runner/GeneratedPluginRegistrant.*
+
+# Firebase related
+android/app/google-services.json
+ios/firebase_app_id_file.json
+
+# User-specific IDE settings
+*.swp
+*.swo
+*.swn
+*.sublime-workspace
+*.sublime-project
+
+# Exclude web, Linux, Windows, and macOS directories
+/web/
+/linux/
+/windows/
+/macos/
