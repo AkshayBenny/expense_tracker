@@ -1,7 +1,9 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../services/auth_service.dart';
+import '../utils/constants.dart'; // Your backendBaseUrl should be defined here
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -19,18 +21,47 @@ class _LoginScreenState extends State<LoginScreen> {
   Future<void> login() async {
     setState(() => isLoading = true);
     final data = await AuthService.login(
-        emailController.text.trim(), passwordController.text.trim());
+      emailController.text.trim(), 
+      passwordController.text.trim()
+    );
     setState(() => isLoading = false);
-    if (data['token'] != null) {
-      final token = data['token'];
+
+    if (data['token'] != null && data['error'] == false) {
+      final token = data['token'] as String;
       final prefs = await SharedPreferences.getInstance();
       await prefs.setString('token', token);
-      Navigator.pushReplacementNamed(context, '/budget');
+
+      // Extract monthlyBudget from the login response.
+      double userBudget = 0.0;
+      if (data['user'] != null && data['user']['monthlyBudget'] != null) {
+        // If monthlyBudget is an object (login response)
+        if (data['user']['monthlyBudget'] is Map) {
+          userBudget = (data['user']['monthlyBudget']['budget'] as num?)?.toDouble() ?? 0.0;
+        } else {
+          // In case it's a plain number
+          userBudget = (data['user']['monthlyBudget'] as num?)?.toDouble() ?? 0.0;
+        }
+      }
+      await prefs.setDouble('monthlyBudget', userBudget);
+
+      // Navigate: if userBudget > 0, go to budget-options; else to budget screen.
+      if (userBudget > 0) {
+        Navigator.pushReplacementNamed(context, '/budget-options');
+      } else {
+        Navigator.pushReplacementNamed(context, '/budget');
+      }
     } else {
       final message = data['message'] ?? 'Login failed';
       ScaffoldMessenger.of(context)
           .showSnackBar(SnackBar(content: Text(message)));
     }
+  }
+
+  @override
+  void dispose() {
+    emailController.dispose();
+    passwordController.dispose();
+    super.dispose();
   }
 
   @override
@@ -57,10 +88,7 @@ class _LoginScreenState extends State<LoginScreen> {
                 style: GoogleFonts.poppins(fontSize: 16),
                 controller: emailController,
                 decoration: InputDecoration(
-                  contentPadding: const EdgeInsets.symmetric(
-                    vertical: 16,
-                    horizontal: 20,
-                  ),
+                  contentPadding: const EdgeInsets.symmetric(vertical: 16, horizontal: 20),
                   hintText: "Email Address",
                   filled: true,
                   fillColor: Colors.grey.shade100,
@@ -76,10 +104,7 @@ class _LoginScreenState extends State<LoginScreen> {
                 controller: passwordController,
                 obscureText: obscurePassword,
                 decoration: InputDecoration(
-                  contentPadding: const EdgeInsets.symmetric(
-                    vertical: 16,
-                    horizontal: 20,
-                  ),
+                  contentPadding: const EdgeInsets.symmetric(vertical: 16, horizontal: 20),
                   hintText: "Password",
                   filled: true,
                   fillColor: Colors.grey.shade100,
@@ -103,8 +128,8 @@ class _LoginScreenState extends State<LoginScreen> {
               Align(
                 alignment: Alignment.center,
                 child: TextButton(
-                  onPressed: () => Navigator.pushReplacementNamed(
-                      context, '/forgot-password'),
+                  onPressed: () =>
+                      Navigator.pushReplacementNamed(context, '/forgot-password'),
                   child: Text(
                     "Forgot Password?",
                     style: GoogleFonts.poppins(
@@ -143,9 +168,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   children: [
                     Text(
                       "Don’t have an account?",
-                      style: GoogleFonts.poppins(
-                        fontSize: 16,
-                      ),
+                      style: GoogleFonts.poppins(fontSize: 16),
                     ),
                     TextButton(
                       onPressed: () =>

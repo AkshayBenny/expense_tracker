@@ -1,0 +1,1 @@
+/home/akshay/Projects/collab/expense-tracker/expense_tracker/build/app/intermediates/cxx/Debug/60672v3u/obj/arm64-v8a
