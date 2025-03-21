@@ -1,13 +1,13 @@
+// lib/screens/login_screen.dart
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../services/auth_service.dart';
-import '../utils/constants.dart'; // Your backendBaseUrl should be defined here
+import '../utils/constants.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
-
   @override
   State<LoginScreen> createState() => _LoginScreenState();
 }
@@ -21,31 +21,41 @@ class _LoginScreenState extends State<LoginScreen> {
   Future<void> login() async {
     setState(() => isLoading = true);
     final data = await AuthService.login(
-      emailController.text.trim(), 
-      passwordController.text.trim()
+      emailController.text.trim(),
+      passwordController.text.trim(),
     );
     setState(() => isLoading = false);
 
     if (data['token'] != null && data['error'] == false) {
       final token = data['token'] as String;
+      final refreshToken = data['refreshToken']
+          as String?; // expecting refreshToken from backend
       final prefs = await SharedPreferences.getInstance();
       await prefs.setString('token', token);
+      if (refreshToken != null) {
+        await prefs.setString('refreshToken', refreshToken);
+      } else {
+        await prefs.remove('refreshToken');
+      }
 
       // Extract monthlyBudget from the login response.
-      double userBudget = 0.0;
+      double? userBudget;
       if (data['user'] != null && data['user']['monthlyBudget'] != null) {
-        // If monthlyBudget is an object (login response)
         if (data['user']['monthlyBudget'] is Map) {
-          userBudget = (data['user']['monthlyBudget']['budget'] as num?)?.toDouble() ?? 0.0;
+          userBudget =
+              (data['user']['monthlyBudget']['budget'] as num?)?.toDouble();
         } else {
-          // In case it's a plain number
-          userBudget = (data['user']['monthlyBudget'] as num?)?.toDouble() ?? 0.0;
+          userBudget = (data['user']['monthlyBudget'] as num?)?.toDouble();
         }
       }
-      await prefs.setDouble('monthlyBudget', userBudget);
+      if (userBudget != null) {
+        await prefs.setDouble('monthlyBudget', userBudget);
+      } else {
+        await prefs.remove('monthlyBudget');
+      }
 
-      // Navigate: if userBudget > 0, go to budget-options; else to budget screen.
-      if (userBudget > 0) {
+      // Navigate based on the budget.
+      if (userBudget != null && userBudget > 0) {
         Navigator.pushReplacementNamed(context, '/budget-options');
       } else {
         Navigator.pushReplacementNamed(context, '/budget');
@@ -88,7 +98,10 @@ class _LoginScreenState extends State<LoginScreen> {
                 style: GoogleFonts.poppins(fontSize: 16),
                 controller: emailController,
                 decoration: InputDecoration(
-                  contentPadding: const EdgeInsets.symmetric(vertical: 16, horizontal: 20),
+                  contentPadding: const EdgeInsets.symmetric(
+                    vertical: 16,
+                    horizontal: 20,
+                  ),
                   hintText: "Email Address",
                   filled: true,
                   fillColor: Colors.grey.shade100,
@@ -104,7 +117,10 @@ class _LoginScreenState extends State<LoginScreen> {
                 controller: passwordController,
                 obscureText: obscurePassword,
                 decoration: InputDecoration(
-                  contentPadding: const EdgeInsets.symmetric(vertical: 16, horizontal: 20),
+                  contentPadding: const EdgeInsets.symmetric(
+                    vertical: 16,
+                    horizontal: 20,
+                  ),
                   hintText: "Password",
                   filled: true,
                   fillColor: Colors.grey.shade100,
@@ -128,8 +144,8 @@ class _LoginScreenState extends State<LoginScreen> {
               Align(
                 alignment: Alignment.center,
                 child: TextButton(
-                  onPressed: () =>
-                      Navigator.pushReplacementNamed(context, '/forgot-password'),
+                  onPressed: () => Navigator.pushReplacementNamed(
+                      context, '/forgot-password'),
                   child: Text(
                     "Forgot Password?",
                     style: GoogleFonts.poppins(

@@ -53,13 +53,14 @@ class _BudgetScreenState extends State<BudgetScreen> {
       );
       setState(() => _isLoading = false);
       final responseData = jsonDecode(response.body);
-      if (response.statusCode == 200) {
+      if (response.statusCode == 200 || response.statusCode == 201) {
         Navigator.pushReplacementNamed(context, '/budget-options');
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-              content: Text(responseData['message'] ??
-                  "Failed to add budget. Please try again.")),
+            content: Text(responseData['message'] ??
+                "Failed to add budget. Please try again."),
+          ),
         );
       }
     } catch (error) {

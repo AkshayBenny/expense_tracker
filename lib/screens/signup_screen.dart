@@ -1,9 +1,10 @@
-import 'dart:convert';
+// lib/screens/signup_screen.dart
+
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../services/auth_service.dart';
-import '../utils/constants.dart'; // Your backendBaseUrl
+import '../utils/constants.dart'; // Ensure your backendBaseUrl is defined here
 
 class SignUpScreen extends StatefulWidget {
   const SignUpScreen({super.key});
@@ -30,17 +31,38 @@ class _SignUpScreenState extends State<SignUpScreen> {
 
     if (data['token'] != null && data['error'] == false) {
       final token = data['token'] as String;
+      // Optionally get a refresh token if provided by the backend.
+      final refreshToken = data['refreshToken'] as String?;
       final prefs = await SharedPreferences.getInstance();
       await prefs.setString('token', token);
+      if (refreshToken != null) {
+        await prefs.setString('refreshToken', refreshToken);
+      } else {
+        await prefs.remove('refreshToken');
+      }
 
-      // Extract monthlyBudget from the signup response.
-      // For signup, monthlyBudget is returned as a plain number.
-      double userBudget =
-          (data['user']['monthlyBudget'] as num?)?.toDouble() ?? 0.0;
-      await prefs.setDouble('monthlyBudget', userBudget);
+      // Extract monthlyBudget from the sign-up response.
+      // If monthlyBudget is null, we remove any stored value.
+      double? userBudget;
+      if (data['user'] != null && data['user']['monthlyBudget'] != null) {
+        // Check if monthlyBudget is an object (e.g. { budget: ... })
+        if (data['user']['monthlyBudget'] is Map) {
+          userBudget =
+              (data['user']['monthlyBudget']['budget'] as num?)?.toDouble();
+        } else {
+          userBudget = (data['user']['monthlyBudget'] as num?)?.toDouble();
+        }
+      }
+      if (userBudget != null) {
+        await prefs.setDouble('monthlyBudget', userBudget);
+      } else {
+        await prefs.remove('monthlyBudget');
+      }
 
-      // Navigate: if userBudget > 0, go to budget-options; else to budget screen.
-      if (userBudget > 0) {
+      // Navigate based on the budget:
+      // If monthlyBudget exists and is greater than 0, go to budget-options;
+      // otherwise, go to the budget (create budget) screen.
+      if (userBudget != null && userBudget > 0) {
         Navigator.pushReplacementNamed(context, '/budget-options');
       } else {
         Navigator.pushReplacementNamed(context, '/budget');
@@ -82,8 +104,8 @@ class _SignUpScreenState extends State<SignUpScreen> {
                 ),
                 const SizedBox(height: 40),
                 TextField(
-                  style: GoogleFonts.poppins(fontSize: 16),
                   controller: nameController,
+                  style: GoogleFonts.poppins(fontSize: 16),
                   decoration: InputDecoration(
                     contentPadding: const EdgeInsets.symmetric(
                         vertical: 16, horizontal: 20),
@@ -98,8 +120,8 @@ class _SignUpScreenState extends State<SignUpScreen> {
                 ),
                 const SizedBox(height: 16),
                 TextField(
-                  style: GoogleFonts.poppins(fontSize: 16),
                   controller: emailController,
+                  style: GoogleFonts.poppins(fontSize: 16),
                   decoration: InputDecoration(
                     contentPadding: const EdgeInsets.symmetric(
                         vertical: 16, horizontal: 20),
@@ -114,8 +136,8 @@ class _SignUpScreenState extends State<SignUpScreen> {
                 ),
                 const SizedBox(height: 16),
                 TextField(
-                  style: GoogleFonts.poppins(fontSize: 16),
                   controller: passwordController,
+                  style: GoogleFonts.poppins(fontSize: 16),
                   obscureText: obscurePassword,
                   decoration: InputDecoration(
                     contentPadding: const EdgeInsets.symmetric(
@@ -169,8 +191,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                     children: [
                       Text(
                         "Already have an account?",
-                        style: GoogleFonts.poppins(
-                            fontSize: 16, fontWeight: FontWeight.w600),
+                        style: GoogleFonts.poppins(fontSize: 16),
                       ),
                       TextButton(
                         onPressed: () =>
