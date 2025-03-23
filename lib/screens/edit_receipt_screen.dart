@@ -13,7 +13,6 @@ class EditReceiptScreen extends StatefulWidget {
 
 class _EditReceiptScreenState extends State<EditReceiptScreen> {
   late List<Map<String, dynamic>> editableItems;
-  double discount = 10.0;
 
   @override
   void initState() {
@@ -38,9 +37,12 @@ class _EditReceiptScreenState extends State<EditReceiptScreen> {
   }
 
   double calculateTotal() {
-    double total = editableItems.fold(
-        0, (sum, item) => sum + (item['price'] * item['quantity']));
-    return total - (total * (discount / 100));
+    double total = editableItems.fold(0, (sum, item) {
+      final price = item['price'] is num ? item['price'] as num : 0;
+      final quantity = item['quantity'] is num ? item['quantity'] as num : 1;
+      return sum + (price * quantity);
+    });
+    return total;
   }
 
   @override
@@ -63,25 +65,25 @@ class _EditReceiptScreenState extends State<EditReceiptScreen> {
               ),
               const SizedBox(height: 32),
 
-              // Headers for Items and Price
+              // Headers for Items, Price, Quantity
               Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 20.0),
+                padding: const EdgeInsets.symmetric(horizontal: 12.0),
                 child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     Expanded(
                       flex: 2,
-                      child: Text(
-                        "Items",
-                        style: GoogleFonts.poppins(fontSize: 16),
-                      ),
+                      child: Text("Items",
+                          style: GoogleFonts.poppins(fontSize: 16)),
                     ),
                     Expanded(
-                      child: Text(
-                        "  Price",
-                        textAlign: TextAlign.right,
-                        style: GoogleFonts.poppins(fontSize: 16),
-                      ),
+                      child: Text("Price",
+                          textAlign: TextAlign.right,
+                          style: GoogleFonts.poppins(fontSize: 16)),
+                    ),
+                    Expanded(
+                      child: Text("Qty",
+                          textAlign: TextAlign.right,
+                          style: GoogleFonts.poppins(fontSize: 16)),
                     ),
                   ],
                 ),
@@ -90,17 +92,18 @@ class _EditReceiptScreenState extends State<EditReceiptScreen> {
               const Divider(),
               const SizedBox(height: 10),
 
-              // List of items (Wrapped in ListView)
-              ListView(
+              // List of items
+              ListView.builder(
                 shrinkWrap: true,
-                physics: NeverScrollableScrollPhysics(),
-                padding: EdgeInsets.zero,
-                children: editableItems.map((item) {
-                  int index = editableItems.indexOf(item);
+                physics: const NeverScrollableScrollPhysics(),
+                itemCount: editableItems.length,
+                itemBuilder: (context, index) {
+                  final item = editableItems[index];
                   return Padding(
                     padding: const EdgeInsets.only(bottom: 12.0),
                     child: Row(
                       children: [
+                        // Item name
                         Expanded(
                           flex: 2,
                           child: TextFormField(
@@ -118,23 +121,23 @@ class _EditReceiptScreenState extends State<EditReceiptScreen> {
                                 borderSide: BorderSide.none,
                               ),
                             ),
-                            initialValue: item['name']
-                                .toString()
-                                .toCamelCase(), // 👈 Apply camel case here
+                            initialValue: item['name'].toString().toCamelCase(),
                             onChanged: (value) {
                               item['name'] = value;
                             },
                           ),
                         ),
-                        SizedBox(width: 8),
+                        const SizedBox(width: 8),
+
+                        // Price
                         Expanded(
                           child: TextFormField(
-                            style: GoogleFonts.poppins(fontSize: 16),
                             textAlign: TextAlign.right,
+                            style: GoogleFonts.poppins(fontSize: 16),
                             decoration: InputDecoration(
                               contentPadding: const EdgeInsets.symmetric(
                                 vertical: 16,
-                                horizontal: 20,
+                                horizontal: 12,
                               ),
                               hintText: "Price",
                               filled: true,
@@ -152,10 +155,38 @@ class _EditReceiptScreenState extends State<EditReceiptScreen> {
                             },
                           ),
                         ),
+                        const SizedBox(width: 8),
+
+                        // Quantity
+                        Expanded(
+                          child: TextFormField(
+                            textAlign: TextAlign.right,
+                            style: GoogleFonts.poppins(fontSize: 16),
+                            decoration: InputDecoration(
+                              contentPadding: const EdgeInsets.symmetric(
+                                vertical: 16,
+                                horizontal: 12,
+                              ),
+                              hintText: "Qty",
+                              filled: true,
+                              fillColor: Colors.grey.shade200,
+                              border: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(12.0),
+                                borderSide: BorderSide.none,
+                              ),
+                            ),
+                            initialValue: item['quantity'].toString(),
+                            keyboardType: TextInputType.number,
+                            onChanged: (value) {
+                              item['quantity'] = int.tryParse(value) ?? 1;
+                              updateTotal();
+                            },
+                          ),
+                        ),
                       ],
                     ),
                   );
-                }).toList(),
+                },
               ),
 
               const SizedBox(height: 10),
@@ -187,7 +218,7 @@ class _EditReceiptScreenState extends State<EditReceiptScreen> {
               const Divider(),
               const SizedBox(height: 10),
 
-              // Grand Total Row
+              // Total
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 20.0),
                 child: Row(
@@ -212,14 +243,14 @@ class _EditReceiptScreenState extends State<EditReceiptScreen> {
               ),
               const SizedBox(height: 64),
 
-              // Save Changes Button
+              // Save Button
               SizedBox(
                 height: 56,
                 width: double.infinity,
                 child: ElevatedButton(
                   style: ElevatedButton.styleFrom(
                     padding: const EdgeInsets.symmetric(vertical: 14),
-                    backgroundColor: const Color(0xFF8E5AF7), // Purple button
+                    backgroundColor: const Color(0xFF8E5AF7),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(16),
                     ),
@@ -237,7 +268,9 @@ class _EditReceiptScreenState extends State<EditReceiptScreen> {
                   ),
                 ),
               ),
-              SizedBox(height: 16),
+              const SizedBox(height: 16),
+
+              // Cancel Button
               SizedBox(
                 height: 56,
                 width: double.infinity,
